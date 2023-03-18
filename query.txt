@@ -1,0 +1,151 @@
+1.Find all the topics and tasks which are thought in the month of October
+
+db.topics.find({
+    $and:[{topic_date:{$gte:ISODate("2020-10-15T00:00:00Z"),$lte:ISODate("2020-10-31T00:00:00Z")}},
+    {"task.task_date":{$gte:ISODate("2020-10-15T00:00:00Z"),$lte:ISODate("2020-10-31T00:00:00Z")}}]
+}).pretty()
+[
+  {
+    _id: ObjectId("641349ed4e19edf3a0a8fe63"),
+    topicid: 1,
+    topic: 'HTML',
+    topic_date: ISODate("2020-10-15T00:00:00.000Z"),
+    task: { task_date: ISODate("2020-10-19T00:00:00.000Z") }
+  },
+  {
+    _id: ObjectId("641349ed4e19edf3a0a8fe64"),
+    topicid: 2,
+    topic: 'CSS',
+    topic_date: ISODate("2020-10-24T00:00:00.000Z"),
+    task: { task_date: ISODate("2020-10-24T00:00:00.000Z") }
+  },
+  {
+    _id: ObjectId("641349ed4e19edf3a0a8fe65"),
+    topicid: 3,
+    topic: 'JavaScript',
+    topic_date: ISODate("2020-10-31T00:00:00.000Z"),
+    task: { task_date: ISODate("2020-10-29T00:00:00.000Z") }
+  }
+]
+________________________________________________________________________________________
+2.Find all the company drives which appeared between 15 oct-2020 and 31-oct-2020
+
+zen> db.company_drives.find({
+...     drive_date:{$gte:ISODate("2020-10-15T00:00:00Z"),$lte:ISODate("2020-10-31T00:00:00Z")}
+... }).pretty()
+[
+  {
+    _id: ObjectId("641349034e19edf3a0a8fe5e"),
+    company_id: 1,
+    drive_date: ISODate("2020-10-15T00:00:00.000Z"),
+    company: 'Meta'
+  },
+  {
+    _id: ObjectId("641349034e19edf3a0a8fe5f"),
+    company_id: 2,
+    drive_date: ISODate("2020-10-20T00:00:00.000Z"),
+    company: 'Apple'
+  },
+  {
+    _id: ObjectId("641349034e19edf3a0a8fe60"),
+    company_id: 3,
+    drive_date: ISODate("2020-10-26T00:00:00.000Z"),
+    company: 'Amazon'
+  },
+  {
+    _id: ObjectId("641349034e19edf3a0a8fe61"),
+    company_id: 4,
+    drive_date: ISODate("2020-10-30T00:00:00.000Z"),
+    company: 'NetFlix'
+  }
+]
+__________________________________________________________________________________________
+3.Find all the company drives and students who are appeared for the placement.
+
+zen> db.users.aggregate([{
+...     $lookup:{
+...         from:"company_drives",
+...         localField:"company_drives",
+...         foreignField: "company_id",
+...         as: "company_drives"
+...     }
+... },{$project:{name:true,_id:false,email:true,"company_drives.company":true}}]).pretty()
+[
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] },
+  { company_drives: [] }
+]
+__________________________________________________________________________________________
+4.Find the number of problems solved by the user in codekata.
+
+zen> db.users.aggregate([
+...     {
+...     $lookup:{
+...         from:"codekata",
+...         localField:"codekata_problems",
+...         foreignField: "q_id",
+...         as: " total_problems"
+...   }  },{ $project: {name:true,_id:false,"codekata.category":true,total_problems:{$cond:{if:{$isArray:"$codekata_problems"},then:{$size:"$codekata_problems"},else:"0"}}}}
+... ])
+[
+  { total_problems: 5 },
+  { total_problems: 7 },
+  { total_problems: 8 },
+  { total_problems: 9 },
+  { total_problems: 6 },
+  { total_problems: 7 },
+  { total_problems: 7 },
+  { total_problems: 9 },
+  { total_problems: 7 },
+  { total_problems: 5 }
+]
+zen>
+____________________________________________________________________________________________
+5.Find all the mentors with who has the mentee's count more than 15
+
+zen> db.mentors.find({
+...     mentee_count:{$gte:15}
+... }).pretty()
+[
+  {
+    _id: ObjectId("64134d374e19edf3a0a8fe7b"),
+    id: 2,
+    mentor_name: 'Rupan',
+    email: 'Rupan@gmail.com',
+    mentee_count: 19
+  },
+  {
+    _id: ObjectId("64134d374e19edf3a0a8fe7c"),
+    id: 3,
+    mentor_name: 'Sai Mohan',
+    email: 'Sai@gmail.com',
+    mentee_count: 25
+  },
+  {
+    _id: ObjectId("64134d374e19edf3a0a8fe7d"),
+    id: 4,
+    mentor_name: 'sanjay',
+    email: 'sanjay05@gmail.com',
+    mentee_count: 30
+  },
+  {
+    _id: ObjectId("64134d374e19edf3a0a8fe7e"),
+    id: 5,
+    mentor_name: 'Vidhyavkm',
+    email: 'vidhyavkm@gmail.com',
+    mentee_count: 30
+  }
+]
+zen>
+________________________________________________________________________________________
+6.Find the number of users who are absent and task is not submitted  between 15 oct-2020 and 31-oct-2020
+
+zen> db.users.find( { $or: [ { absent_on: { $exists: true, $ne: [] }}, { submitted_task: { $exists: true, $ne: [] }} ] } ).count()
+10
